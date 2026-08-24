@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Práctica 1 - Adición Dinámica de DOM</title>
+</head>
+<body>
+
+    <h2>Práctica 1: Agregar Elementos al Select en Tiempo Real</h2>
+    
+    <div>
+        <label for="txtId">ID Comuna:</label>
+        <input type="text" id="txtId" placeholder="Ej: 1">
+        <br><br>
+        
+        <label for="txtComuna">Nombre Comuna:</label>
+        <input type="text" id="txtComuna" placeholder="Ej: Santiago">
+        <br><br>
+        
+        <button id="btnAgregar" onclick="agregarComuna();">Agregar Comuna</button>
+    </div>
+
+    <hr>
+
+    <div>
+        <h3>Listado de Comunas:</h3>
+        <select id="cmbComuna" name="cmbComuna">
+            <!-- Las opciones se inyectarán dinámicamente aquí -->
+        </select>
+    </div>
+
+    <!-- Regla de oro del profesor: El script al final para no retrasar la carga de la página [174] -->
+    <script>
+        function agregarComuna() {
+            // 1. Obtener los elementos del DOM por su ID
+            let cmbComuna = document.getElementById("cmbComuna");
+            let txtId = document.getElementById("txtId");
+            let txtComuna = document.getElementById("txtComuna");
+            
+            // 2. Validar que los campos no estén vacíos
+            if (txtId.value.trim() === "" || txtComuna.value.trim() === "") {
+                alert("Por favor rellene ambos campos antes de agregar.");
+                return;
+            }
+            
+            // 3. Crear el nuevo elemento HTML 'option' de manera dinámica
+            let optionAux = document.createElement("option");
+            
+            // 4. Seteamos sus atributos y contenido usando ES6
+            optionAux.setAttribute("value", txtId.value);
+            optionAux.innerText = txtComuna.value;
+            
+            // 5. Insertar el elemento 'option' dentro del elemento 'select' (parent)
+            cmbComuna.appendChild(optionAux);
+            
+            // 6. Limpiar los inputs para nuevas entradas
+            txtId.value = "";
+            txtComuna.value = "";
+        }
+    </script>
+
+</body>
+</html>
