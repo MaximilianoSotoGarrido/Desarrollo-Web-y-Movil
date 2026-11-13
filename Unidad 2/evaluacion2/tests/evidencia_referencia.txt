@@ -1,0 +1,19 @@
+# Salida esperada de las pruebas de integracion (referencia).
+# Reproduzca en su equipo con MongoDB activo y: python tests/pruebas.py
+
+[PASS] F01 catalogo publico sin token -> status=200
+[PASS] Ruta protegida sin token -> 401 -> status=401
+[PASS] Login correcto (ana) -> status=200
+[PASS] Login clave incorrecta -> 401 -> status=401
+[PASS] Perfil propio con token -> status=200
+[PASS] F02 crear pedido total=3780 estado=pagado -> status=200 body={"order_id":"ORD-B9DE1256","user_id":"USR-001","items":[{"sku":"SKU-001","cantidad":2,"precio_unitario":1890}],"total":3780,"estado":"pagado","reinten
+[PASS] F02 reintento idempotente mismo order_id -> reintento=True
+[PASS] Listado propio incluye el pedido
+[PASS] F03 pedido propio -> 200 -> status=200
+[PASS] F03 pedido ajeno -> 404 -> status=404
+[PASS] Cliente NO crea producto -> 403 -> status=403
+[PASS] Operador SI crea producto -> 201 -> status=201
+[PASS] Stock insuficiente -> 409 -> status=409
+[PASS] Stock descontado SKU-001 = 48 -> stock=48
+
+Resumen: 14/14 escenarios PASS
