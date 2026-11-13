@@ -1,0 +1,12 @@
+{
+  "status": 200,
+  "message": "Productos obtenidos correctamente",
+  "data": [
+    { "id": 1, "nombre": "Cuaderno Universitario", "descripcion": "100 Hojas matemática 7mm tapa dura", "precio": 1890, "icono": "fa-book" },
+    { "id": 2, "nombre": "Resma Papel Carta", "descripcion": "500 Hojas 75g multicopia", "precio": 4290, "icono": "fa-file-text-o" },
+    { "id": 3, "nombre": "Set Lápices Pasta", "descripcion": "Pack 10 unidades azul/negro/rojo", "precio": 2490, "icono": "fa-pencil" },
+    { "id": 4, "nombre": "Corchetera Escritorio", "descripcion": "Metálica ergonómica para 25 hojas", "precio": 3190, "icono": "fa-scissors" },
+    { "id": 5, "nombre": "Archivador Tamaño Oficio", "descripcion": "Lomo ancho reforzado para oficina", "precio": 2890, "icono": "fa-folder-open" },
+    { "id": 6, "nombre": "Calculadora Científica", "descripcion": "240 Funciones para estudiantes y profesionales", "precio": 8990, "icono": "fa-calculator" }
+  ]
+}

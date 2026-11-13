@@ -1,0 +1,68 @@
+/* Estilos propios de OfiExpress - Box Model y Flexbox
+   El grid (filas y columnas por breakpoint) lo resuelve Bootstrap. */
+
+/* Box Model: el padding y el borde quedan dentro del ancho declarado */
+* {
+  box-sizing: border-box;
+}
+
+/* Tarjeta de producto: altura mínima pareja para todas las tarjetas */
+.card-producto {
+  min-height: 230px;
+  padding: 0.25rem;
+}
+
+/* Panel del pedido: borde, padding y fondo propios */
+.panel-pedido {
+  background-color: #ffffff;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 1rem;
+  max-width: 100%;
+}
+
+/* Flexbox: nombre a la izquierda y controles a la derecha */
+.linea-pedido {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #dee2e6;
+}
+
+/* Flexbox: botones - cantidad + alineados y separados */
+.linea-pedido .controles {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* Flexbox: texto "Total" y monto en extremos opuestos */
+.total-pedido {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 2px solid #212529;
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+/* Flexbox en columna: estados de carga, vacío y error centrados */
+.estado-ui {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 2rem 1rem;
+  color: #6c757d;
+}
+
+.estado-ui .fa {
+  font-size: 2.2rem;
+  margin-bottom: 0.5rem;
+}
+
+.estado-ui.error {
+  color: #dc3545;
+}

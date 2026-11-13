@@ -8,6 +8,8 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <!-- FontAwesome 4 CDN -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <!-- Estilos propios: Box Model y Flexbox -->
+  <link href="css/estilos.css" rel="stylesheet">
 </head>
 <body class="d-flex flex-column min-vh-100 bg-light">
 
@@ -73,87 +75,46 @@
       </div>
     </div>
 
-    <!-- Rejilla de Tarjetas (Cards) con Breakpoints Responsivos Exactos -->
-    <div class="row g-3" id="contenedorProductos">
-      
-      <!-- Producto 1 -->
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2 col-xxl-1 item-producto">
-        <div class="card h-100 shadow-sm border-0">
-          <div class="card-body text-center d-flex flex-column">
-            <i class="fa fa-book fa-3x text-warning my-2"></i>
-            <h6 class="card-title fw-bold text-dark">Cuaderno Universitario</h6>
-            <p class="card-text text-secondary small flex-grow-1">100 Hojas matemática 7mm tapa dura</p>
-            <p class="fw-bold text-success mb-2">$1.890</p>
-            <button class="btn btn-sm btn-dark btn-agregar" data-id="1"><i class="fa fa-cart-plus me-1"></i> Agregar</button>
-          </div>
-        </div>
+    <div class="row g-4">
+      <!-- Columna catálogo: las tarjetas se generan con JS desde el servicio simulado -->
+      <div class="col-12 col-lg-8">
+        <div class="row g-3" id="contenedorProductos"></div>
       </div>
 
-      <!-- Producto 2 -->
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2 col-xxl-1 item-producto">
-        <div class="card h-100 shadow-sm border-0">
-          <div class="card-body text-center d-flex flex-column">
-            <i class="fa fa-file-text-o fa-3x text-warning my-2"></i>
-            <h6 class="card-title fw-bold text-dark">Resma Papel Carta</h6>
-            <p class="card-text text-secondary small flex-grow-1">500 Hojas 75g multicopia</p>
-            <p class="fw-bold text-success mb-2">$4.290</p>
-            <button class="btn btn-sm btn-dark btn-agregar" data-id="2"><i class="fa fa-cart-plus me-1"></i> Agregar</button>
+      <!-- Columna pedido -->
+      <div class="col-12 col-lg-4">
+        <div class="panel-pedido">
+          <h5 class="fw-bold mb-3"><i class="fa fa-shopping-cart text-warning me-2"></i>Mi pedido
+            <span class="badge bg-warning text-dark ms-1" id="contadorPedido">0</span></h5>
+
+          <!-- Estado vacío del pedido -->
+          <div id="pedidoVacio" class="estado-ui">
+            <i class="fa fa-cart-plus"></i>
+            <p class="mb-0">Tu pedido está vacío.<br>Agrega productos del catálogo.</p>
           </div>
+
+          <!-- Líneas del pedido (se generan con JS) -->
+          <div id="lineasPedido"></div>
+
+          <!-- Total y confirmación -->
+          <div id="piePedido" class="d-none">
+            <div class="total-pedido">
+              <span>Total</span>
+              <span id="totalPedido">$0</span>
+            </div>
+            <div class="form-check my-2">
+              <input class="form-check-input" type="checkbox" id="simularError">
+              <label class="form-check-label small text-muted" for="simularError">Simular error del servicio</label>
+            </div>
+            <button class="btn btn-dark w-100" type="button" id="btnConfirmar">
+              <i class="fa fa-check me-1"></i> Confirmar pedido
+            </button>
+          </div>
+
+          <!-- Resultado de la confirmación: carga, éxito o error -->
+          <div id="resultadoPedido" class="mt-2"></div>
         </div>
       </div>
-
-      <!-- Producto 3 -->
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2 col-xxl-1 item-producto">
-        <div class="card h-100 shadow-sm border-0">
-          <div class="card-body text-center d-flex flex-column">
-            <i class="fa fa-pencil fa-3x text-warning my-2"></i>
-            <h6 class="card-title fw-bold text-dark">Set Lápices Pasta</h6>
-            <p class="card-text text-secondary small flex-grow-1">Pack 10 unidades azul/negro/rojo</p>
-            <p class="fw-bold text-success mb-2">$2.490</p>
-            <button class="btn btn-sm btn-dark btn-agregar" data-id="3"><i class="fa fa-cart-plus me-1"></i> Agregar</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Producto 4 -->
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2 col-xxl-1 item-producto">
-        <div class="card h-100 shadow-sm border-0">
-          <div class="card-body text-center d-flex flex-column">
-            <i class="fa fa-scissors fa-3x text-warning my-2"></i>
-            <h6 class="card-title fw-bold text-dark">Corchetera Escritorio</h6>
-            <p class="card-text text-secondary small flex-grow-1">Metálica ergonómica para 25 hojas</p>
-            <p class="fw-bold text-success mb-2">$3.190</p>
-            <button class="btn btn-sm btn-dark btn-agregar" data-id="4"><i class="fa fa-cart-plus me-1"></i> Agregar</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Producto 5 -->
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2 col-xxl-1 item-producto">
-        <div class="card h-100 shadow-sm border-0">
-          <div class="card-body text-center d-flex flex-column">
-            <i class="fa fa-folder-open fa-3x text-warning my-2"></i>
-            <h6 class="card-title fw-bold text-dark">Archivador Tamaño Oficio</h6>
-            <p class="card-text text-secondary small flex-grow-1">Lomo ancho reforzado para oficina</p>
-            <p class="fw-bold text-success mb-2">$2.890</p>
-            <button class="btn btn-sm btn-dark btn-agregar" data-id="5"><i class="fa fa-cart-plus me-1"></i> Agregar</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Producto 6 -->
-      <div class="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2 col-xxl-1 item-producto">
-        <div class="card h-100 shadow-sm border-0">
-          <div class="card-body text-center d-flex flex-column">
-            <i class="fa fa-calculator fa-3x text-warning my-2"></i>
-            <h6 class="card-title fw-bold text-dark">Calculadora Científica</h6>
-            <p class="card-text text-secondary small flex-grow-1">240 Funciones para estudiantes y profesionales</p>
-            <p class="fw-bold text-success mb-2">$8.990</p>
-            <button class="btn btn-sm btn-dark btn-agregar" data-id="6"><i class="fa fa-cart-plus me-1"></i> Agregar</button>
-          </div>
-        </div>
-      </div>
-
     </div>
   </main>
 
@@ -198,36 +159,6 @@
 
   <!-- Scripts al final del documento (Regla Critica JS DOM) -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script>
-    // JS ES6+ - Filtrado dinámico de productos y manejo de carrito (Semana 3)
-    document.addEventListener("DOMContentLoaded", () => {
-      const inputBuscar = document.getElementById("inputBuscar");
-      const btnBuscar = document.getElementById("btnBuscar");
-      const productos = document.querySelectorAll(".item-producto");
-
-      const filtrarProductos = () => {
-        const texto = inputBuscar.value.toLowerCase();
-        productos.forEach(prod => {
-          const titulo = prod.querySelector(".card-title").textContent.toLowerCase();
-          if(titulo.includes(texto)) {
-            prod.style.display = "block";
-          } else {
-            prod.style.display = "none";
-          }
-        });
-      };
-
-      if(btnBuscar) btnBuscar.addEventListener("click", filtrarProductos);
-      if(inputBuscar) inputBuscar.addEventListener("keyup", filtrarProductos);
-
-      const btnsAgregar = document.querySelectorAll(".btn-agregar");
-      btnsAgregar.forEach(btn => {
-        btn.addEventListener("click", (e) => {
-          const prodId = e.target.getAttribute("data-id");
-          console.log(`Producto agregado al carrito ID: ${prodId}`);
-        });
-      });
-    });
-  </script>
+  <script src="js/productos.js"></script>
 </body>
 </html>
