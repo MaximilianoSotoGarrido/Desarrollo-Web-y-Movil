@@ -1,9 +1,13 @@
 // JS ES6+ - Catálogo dinámico, filtro y pedido de OfiExpress (Caso 37)
-// Consulta: el catálogo se obtiene de un servicio simulado (data/productos.json)
-// Acción:   la confirmación del pedido simula un envío a una API
+// Integración: todas las llamadas van al API Gateway, nunca directo a los servicios
+// Consulta: catálogo público desde inventory
+// Acción:   login en el Auth Service y confirmación del pedido en orders
 
-let productos = [];   // datos recibidos del servicio simulado
-let pedido = [];      // productos agregados: { id, nombre, precio, cantidad }
+const API_GATEWAY = "http://localhost:8000";
+
+let productos = [];   // datos recibidos del gateway
+let pedido = [];      // productos agregados: { sku, nombre, precio, cantidad }
+let claveIdempotencia = null;  // evita registrar dos veces el mismo pedido
 
 // Formato de precio chileno: 1890 -> $1.890
 const formatoPrecio = (valor) => `$${valor.toLocaleString("es-CL")}`;
@@ -17,18 +21,18 @@ const mostrarEstado = (contenedor, icono, mensaje, claseExtra = "") => {
     </div>`;
 };
 
-// ---------- 1) Consulta al servicio simulado ----------
+// ---------- 1) Consulta del catálogo al gateway ----------
 const cargarProductos = async () => {
   const contenedor = document.getElementById("contenedorProductos");
   mostrarEstado(contenedor, "fa-spinner fa-spin", "Cargando productos...");
 
   try {
-    const respuesta = await fetch("data/productos.json");
+    const respuesta = await fetch(`${API_GATEWAY}/api/inventory/productos`);
     if (!respuesta.ok) {
       throw new Error(`Respuesta ${respuesta.status}`);
     }
     const respuestaAPI = await respuesta.json();
-    productos = respuestaAPI.data;
+    productos = respuestaAPI.productos;
     mostrarProductos(productos);
   } catch (err) {
     // Estado de error visible para el usuario, con opción de reintentar
@@ -63,7 +67,7 @@ const mostrarProductos = (lista) => {
           <h6 class="card-title fw-bold text-dark">${prod.nombre}</h6>
           <p class="card-text text-secondary small flex-grow-1">${prod.descripcion}</p>
           <p class="fw-bold text-success mb-2">${formatoPrecio(prod.precio)}</p>
-          <button class="btn btn-sm btn-dark btn-agregar" data-id="${prod.id}">
+          <button class="btn btn-sm btn-dark btn-agregar" data-sku="${prod.sku}">
             <i class="fa fa-cart-plus me-1"></i> Agregar
           </button>
         </div>
@@ -75,7 +79,7 @@ const mostrarProductos = (lista) => {
   const btnsAgregar = document.querySelectorAll(".btn-agregar");
   btnsAgregar.forEach((btn) => {
     btn.addEventListener("click", () => {
-      agregarAlPedido(Number(btn.getAttribute("data-id")));
+      agregarAlPedido(btn.getAttribute("data-sku"));
     });
   });
 };
@@ -88,23 +92,23 @@ const filtrarProductos = () => {
 };
 
 // ---------- 4) Pedido: agregar, cambiar cantidad y quitar ----------
-const agregarAlPedido = (id) => {
-  const existente = pedido.find((item) => item.id === id);
+const agregarAlPedido = (sku) => {
+  const existente = pedido.find((item) => item.sku === sku);
   if (existente) {
     existente.cantidad++;
   } else {
-    const prod = productos.find((p) => p.id === id);
-    pedido.push({ id: prod.id, nombre: prod.nombre, precio: prod.precio, cantidad: 1 });
+    const prod = productos.find((p) => p.sku === sku);
+    pedido.push({ sku: prod.sku, nombre: prod.nombre, precio: prod.precio, cantidad: 1 });
   }
   document.getElementById("resultadoPedido").innerHTML = "";
   mostrarPedido();
 };
 
-const cambiarCantidad = (id, cambio) => {
-  const item = pedido.find((p) => p.id === id);
+const cambiarCantidad = (sku, cambio) => {
+  const item = pedido.find((p) => p.sku === sku);
   item.cantidad += cambio;
   if (item.cantidad <= 0) {
-    pedido = pedido.filter((p) => p.id !== id);
+    pedido = pedido.filter((p) => p.sku !== sku);
   }
   mostrarPedido();
 };
@@ -134,8 +138,8 @@ const mostrarPedido = () => {
         <span class="fw-bold">${item.cantidad}</span>
         <button class="btn btn-sm btn-outline-secondary btn-mas">+</button>
       </div>`;
-    fila.querySelector(".btn-menos").addEventListener("click", () => cambiarCantidad(item.id, -1));
-    fila.querySelector(".btn-mas").addEventListener("click", () => cambiarCantidad(item.id, 1));
+    fila.querySelector(".btn-menos").addEventListener("click", () => cambiarCantidad(item.sku, -1));
+    fila.querySelector(".btn-mas").addEventListener("click", () => cambiarCantidad(item.sku, 1));
     lineas.appendChild(fila);
   });
 
@@ -152,37 +156,88 @@ const mostrarPedido = () => {
   }
 };
 
-// ---------- 5) Acción simulada: confirmar pedido ----------
-const enviarPedidoAPI = (datos) => {
-  // Simula la respuesta de una API con una demora de 1 segundo
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      if (document.getElementById("simularError").checked) {
-        reject(new Error("El servicio de pedidos no respondió"));
-      } else {
-        resolve({ status: 201, message: "Pedido registrado", data: { numero: Math.floor(Math.random() * 9000) + 1000, total: datos.total } });
-      }
-    }, 1000);
-  });
+// ---------- 5) Login: el gateway lo envía al Auth Service ----------
+const iniciarSesion = async (evento) => {
+  evento.preventDefault();
+  const mensaje = document.getElementById("loginMensaje");
+  const datos = {
+    username: document.getElementById("loginUsuario").value,
+    password: document.getElementById("loginPassword").value
+  };
+
+  try {
+    const respuesta = await fetch(`${API_GATEWAY}/api/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(datos)
+    });
+    if (!respuesta.ok) {
+      mensaje.innerHTML = `<div class="alert alert-danger py-2 mb-0">Usuario o contraseña incorrectos.</div>`;
+      return;
+    }
+    const respuestaAPI = await respuesta.json();
+    sessionStorage.setItem("token", respuestaAPI.access_token);
+    sessionStorage.setItem("usuario", datos.username);
+    mensaje.innerHTML = "";
+    mostrarSesion();
+    bootstrap.Modal.getInstance(document.getElementById("loginModal")).hide();
+  } catch (err) {
+    mensaje.innerHTML = `<div class="alert alert-danger py-2 mb-0">No se pudo conectar con el servidor.</div>`;
+    console.log(`Error ${err}`);
+  }
 };
 
+const mostrarSesion = () => {
+  const usuario = sessionStorage.getItem("usuario");
+  if (usuario) {
+    document.getElementById("btnAcceder").innerHTML = `<i class="fa fa-user me-1"></i> ${usuario}`;
+  }
+};
+
+// ---------- 6) Confirmar pedido: el gateway valida el token y lo envía a orders ----------
 const confirmarPedido = async () => {
   const resultado = document.getElementById("resultadoPedido");
   const btnConfirmar = document.getElementById("btnConfirmar");
   btnConfirmar.disabled = true;
   resultado.innerHTML = `<div class="alert alert-secondary mb-0"><i class="fa fa-spinner fa-spin me-2"></i>Enviando pedido...</div>`;
 
-  let total = 0;
-  pedido.forEach((item) => { total += item.precio * item.cantidad; });
+  if (!claveIdempotencia) {
+    claveIdempotencia = `WEB-${Date.now()}`;
+  }
+  const datos = {
+    items: pedido.map((item) => ({ sku: item.sku, cantidad: item.cantidad })),
+    idempotency_key: claveIdempotencia
+  };
+
+  // El token solo se envía si el usuario inició sesión
+  const cabeceras = { "Content-Type": "application/json" };
+  const token = sessionStorage.getItem("token");
+  if (token) {
+    cabeceras["Authorization"] = `Bearer ${token}`;
+  }
 
   try {
-    const respuestaAPI = await enviarPedidoAPI({ items: pedido, total: total });
+    const respuesta = await fetch(`${API_GATEWAY}/api/orders/pedidos`, {
+      method: "POST",
+      headers: cabeceras,
+      body: JSON.stringify(datos)
+    });
+    const respuestaAPI = await respuesta.json();
+
+    if (respuesta.status === 401) {
+      throw new Error("Debes iniciar sesión para confirmar el pedido");
+    }
+    if (!respuesta.ok) {
+      throw new Error(respuestaAPI.detail || "El servicio de pedidos no respondió");
+    }
+
     resultado.innerHTML = `
       <div class="alert alert-success mb-0">
-        <i class="fa fa-check-circle me-2"></i>${respuestaAPI.message}: N° ${respuestaAPI.data.numero}
-        por ${formatoPrecio(respuestaAPI.data.total)}
+        <i class="fa fa-check-circle me-2"></i>Pedido ${respuestaAPI.order_id} registrado
+        por ${formatoPrecio(respuestaAPI.total)}, estado ${respuestaAPI.estado}
       </div>`;
     pedido = [];
+    claveIdempotencia = null;
     mostrarPedido();
   } catch (err) {
     // El pedido se conserva para que el usuario pueda reintentar
@@ -199,5 +254,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("btnBuscar").addEventListener("click", filtrarProductos);
   document.getElementById("inputBuscar").addEventListener("keyup", filtrarProductos);
   document.getElementById("btnConfirmar").addEventListener("click", confirmarPedido);
+  document.getElementById("formLogin").addEventListener("submit", iniciarSesion);
+  mostrarSesion();
   cargarProductos();
 });
