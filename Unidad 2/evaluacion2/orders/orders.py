@@ -48,7 +48,9 @@ FIRMA = {"X-Gateway-Secret": INTERNAL_GATEWAY_SECRET}
 
 def verify_gateway(x_gateway_secret: str = Header(default="")):
     if not _s.compare_digest(x_gateway_secret, INTERNAL_GATEWAY_SECRET):
+        print("[ORDERS] Firma del gateway ausente o invalida, llamada rechazada con 403", flush=True)
         raise HTTPException(status_code=403, detail="Solicitud no autorizada; falta firma del gateway")
+    print("[ORDERS] Firma del gateway valida, llamada permitida", flush=True)
 
 
 class LineaIn(BaseModel):
@@ -79,6 +81,7 @@ async def crear_pedido(pedido: PedidoIn, x_authenticated_client: str | None = He
     # 1) Idempotencia: si ya existe (titular + clave), devuelve el pedido previo.
     previo = await coll.find_one({"user_id": x_authenticated_client, "idempotency_key": pedido.idempotency_key})
     if previo:
+        print(f"[ORDERS] MongoDB ofiexpress_orders.pedidos: el pedido {previo['order_id']} ya existia, no se duplica", flush=True)
         return {**doc_to_pedido(previo), "reintento": True}
 
     # 2) Reserva de stock en inventory con compensacion ante fallo parcial.
@@ -129,6 +132,7 @@ async def crear_pedido(pedido: PedidoIn, x_authenticated_client: str | None = He
         "estado": estado,
     }
     await coll.insert_one(documento)
+    print(f"[ORDERS] MongoDB ofiexpress_orders.pedidos: insertado {order_id} de {x_authenticated_client}, total {total}, estado {estado}", flush=True)
     return {**doc_to_pedido(documento), "reintento": False}
 
 
@@ -138,6 +142,7 @@ async def listar_pedidos(x_authenticated_client: str | None = Header(default=Non
     if not x_authenticated_client:
         raise HTTPException(status_code=401, detail="Identidad requerida")
     items = [doc_to_pedido(d) async for d in coll.find({"user_id": x_authenticated_client})]
+    print(f"[ORDERS] MongoDB ofiexpress_orders.pedidos: consulta de pedidos de {x_authenticated_client}, {len(items)} encontrados", flush=True)
     return {"pedidos": items}
 
 

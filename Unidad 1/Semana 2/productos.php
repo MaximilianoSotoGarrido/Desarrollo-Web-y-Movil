@@ -48,7 +48,7 @@
               <a class="nav-link" href="contacto.php">Contacto</a>
             </li>
           </ul>
-          <button class="btn btn-outline-warning" type="button" data-bs-toggle="modal" data-bs-target="#loginModal">
+          <button class="btn btn-outline-warning" type="button" id="btnAcceder" data-bs-toggle="modal" data-bs-target="#loginModal">
             <i class="fa fa-user me-1"></i> Acceder
           </button>
         </div>
@@ -102,11 +102,7 @@
               <span>Total</span>
               <span id="totalPedido">$0</span>
             </div>
-            <div class="form-check my-2">
-              <input class="form-check-input" type="checkbox" id="simularError">
-              <label class="form-check-label small text-muted" for="simularError">Simular error del servicio</label>
-            </div>
-            <button class="btn btn-dark w-100" type="button" id="btnConfirmar">
+            <button class="btn btn-dark w-100 mt-2" type="button" id="btnConfirmar">
               <i class="fa fa-check me-1"></i> Confirmar pedido
             </button>
           </div>
@@ -133,20 +129,17 @@
           <h5 class="modal-title" id="loginModalLabel"><i class="fa fa-user-circle me-2"></i>Autenticación de Usuario</h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
         </div>
-        <form action="empresa.php" method="POST" id="formLogin">
+        <form id="formLogin">
           <div class="modal-body">
             <div class="mb-3">
-              <label for="loginEmail" class="form-label">Correo Electrónico:</label>
-              <input type="email" class="form-control" id="loginEmail" required placeholder="usuario@ofiexpress.cl">
+              <label for="loginUsuario" class="form-label">Usuario:</label>
+              <input type="text" class="form-control" id="loginUsuario" required placeholder="ana">
             </div>
             <div class="mb-3">
               <label for="loginPassword" class="form-label">Contraseña:</label>
               <input type="password" class="form-control" id="loginPassword" required placeholder="••••••••">
             </div>
-            <div class="mb-3 form-check">
-              <input type="checkbox" class="form-check-input" id="rememberMe">
-              <label class="form-check-label" for="rememberMe">Recordar sesión</label>
-            </div>
+            <div id="loginMensaje"></div>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>

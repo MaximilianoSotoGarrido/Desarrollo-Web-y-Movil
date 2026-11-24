@@ -12,14 +12,20 @@ from pymongo import MongoClient
 
 MONGODB_URI = "mongodb://localhost:27017"
 
-# Catalogo de OfiExpress (mismos productos y precios del frontend, caso 37).
+# Catalogo de OfiExpress (mismos productos, precios, descripciones e iconos del frontend, caso 37).
 PRODUCTOS = [
-    {"sku": "SKU-001", "nombre": "Cuaderno Universitario", "precio": 1890, "stock": 50, "categoria": "escolar"},
-    {"sku": "SKU-002", "nombre": "Resma Papel Carta", "precio": 4290, "stock": 40, "categoria": "oficina"},
-    {"sku": "SKU-003", "nombre": "Set Lapices Pasta", "precio": 2490, "stock": 60, "categoria": "escritura"},
-    {"sku": "SKU-004", "nombre": "Corchetera Escritorio", "precio": 3190, "stock": 30, "categoria": "oficina"},
-    {"sku": "SKU-005", "nombre": "Archivador Tamano Oficio", "precio": 2890, "stock": 35, "categoria": "oficina"},
-    {"sku": "SKU-006", "nombre": "Calculadora Cientifica", "precio": 8990, "stock": 20, "categoria": "escolar"},
+    {"sku": "SKU-001", "nombre": "Cuaderno Universitario", "precio": 1890, "stock": 50, "categoria": "escolar",
+     "descripcion": "100 Hojas matemática 7mm tapa dura", "icono": "fa-book"},
+    {"sku": "SKU-002", "nombre": "Resma Papel Carta", "precio": 4290, "stock": 40, "categoria": "oficina",
+     "descripcion": "500 Hojas 75g multicopia", "icono": "fa-file-text-o"},
+    {"sku": "SKU-003", "nombre": "Set Lápices Pasta", "precio": 2490, "stock": 60, "categoria": "escritura",
+     "descripcion": "Pack 10 unidades azul/negro/rojo", "icono": "fa-pencil"},
+    {"sku": "SKU-004", "nombre": "Corchetera Escritorio", "precio": 3190, "stock": 30, "categoria": "oficina",
+     "descripcion": "Metálica ergonómica para 25 hojas", "icono": "fa-scissors"},
+    {"sku": "SKU-005", "nombre": "Archivador Tamaño Oficio", "precio": 2890, "stock": 35, "categoria": "oficina",
+     "descripcion": "Lomo ancho reforzado para oficina", "icono": "fa-folder-open"},
+    {"sku": "SKU-006", "nombre": "Calculadora Científica", "precio": 8990, "stock": 20, "categoria": "escolar",
+     "descripcion": "240 Funciones para estudiantes y profesionales", "icono": "fa-calculator"},
 ]
 
 # Perfiles de cliente; user_id coincide con los usuarios del Auth Service.

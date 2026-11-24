@@ -39,10 +39,12 @@ SECRETOS = {
 def leer_secreto(nombre: str, x_vault_token: str = Header(default="")):
     """Devuelve el secreto solicitado si el token de acceso es valido."""
     if x_vault_token != VAULT_TOKEN:
+        print(f"[SECRET-MANAGER] Token invalido, se niega el secreto '{nombre}'", flush=True)
         raise HTTPException(status_code=403, detail="Token de secretos invalido")
     datos = SECRETOS.get(nombre)
     if datos is None:
         raise HTTPException(status_code=404, detail="Secreto no encontrado")
+    print(f"[SECRET-MANAGER] Token valido, se entrega el secreto '{nombre}'", flush=True)
     # Estructura identica a Vault KV v2: data.data contiene el mapa de secretos.
     return {"data": {"data": datos}}
 
