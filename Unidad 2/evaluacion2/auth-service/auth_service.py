@@ -49,6 +49,7 @@ class IntrospectionRequest(BaseModel):
 def verificar_gateway(x_gateway_auth_secret: str):
     """Rechaza cualquier llamada que no provenga del gateway autorizado."""
     if not secrets.compare_digest(x_gateway_auth_secret, AUTH_INTROSPECTION_SECRET):
+        print("[AUTH] Llamada rechazada, no trae el secreto del gateway", flush=True)
         raise HTTPException(status_code=403, detail="Gateway no autorizado")
 
 
@@ -58,6 +59,7 @@ def login(request: LoginRequest, x_gateway_auth_secret: str = Header(default="")
     user = USERS.get(request.username)
     if user is None or user["password"] != request.password:
         # Mismo mensaje para usuario inexistente o clave incorrecta.
+        print(f"[AUTH] Autenticacion fallida para '{request.username}'", flush=True)
         raise HTTPException(status_code=401, detail="Credenciales incorrectas")
     access_token = secrets.token_urlsafe(32)
     expira = datetime.now(timezone.utc) + timedelta(minutes=TOKEN_LIFETIME_MINUTES)
@@ -67,6 +69,7 @@ def login(request: LoginRequest, x_gateway_auth_secret: str = Header(default="")
         "roles": user["roles"],
         "expires_at": expira,
     }
+    print(f"[AUTH] Autenticacion correcta de '{request.username}', token emitido por {TOKEN_LIFETIME_MINUTES} min", flush=True)
     return {
         "access_token": access_token,
         "token_type": "bearer",
@@ -79,10 +82,13 @@ def introspect(request: IntrospectionRequest, x_gateway_auth_secret: str = Heade
     verificar_gateway(x_gateway_auth_secret)
     session = SESSIONS.get(request.token)
     if session is None:
+        print("[AUTH] Autorizacion pedida por el gateway: token desconocido, inactivo", flush=True)
         return {"active": False}
     if datetime.now(timezone.utc) > session["expires_at"]:
         SESSIONS.pop(request.token, None)
+        print("[AUTH] Autorizacion pedida por el gateway: token expirado, inactivo", flush=True)
         return {"active": False}
+    print(f"[AUTH] Autorizacion pedida por el gateway: token activo de '{session['username']}', roles {session['roles']}", flush=True)
     return {
         "active": True,
         "user_id": session["user_id"],

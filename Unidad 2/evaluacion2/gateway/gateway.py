@@ -15,11 +15,26 @@ import os
 
 import httpx
 from fastapi import FastAPI, Depends, HTTPException, Request, Response
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 app = FastAPI(
     title="API Gateway OfiExpress",
     description="Enrutamiento y control de acceso al backend de la papeleria OfiExpress.",
+)
+
+# CORS: el navegador solo deja que la pagina del frontend llame al gateway
+# si el gateway autoriza ese origen. Solo se permite el frontend local.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost",
+        "http://127.0.0.1",
+        "http://localhost:8080",
+        "http://127.0.0.1:8080",
+    ],
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 security = HTTPBearer(auto_error=False)
@@ -63,9 +78,12 @@ async def get_gateway_secrets():
         async with httpx.AsyncClient(timeout=5.0) as client:
             response = await client.get(url, headers=headers)
     except httpx.RequestError:
+        print("[GATEWAY] Secret Manager no responde", flush=True)
         raise HTTPException(status_code=500, detail="No fue posible acceder al administrador de secretos")
     if response.status_code != 200:
+        print(f"[GATEWAY] Secret Manager rechazo la solicitud ({response.status_code})", flush=True)
         raise HTTPException(status_code=500, detail="Secreto del gateway no disponible")
+    print("[GATEWAY] Secret Manager entrego los secretos del gateway", flush=True)
     return response.json()["data"]["data"]
 
 
@@ -79,7 +97,12 @@ async def introspectar(token: str, introspection_secret: str):
             )
     except httpx.RequestError:
         raise HTTPException(status_code=502, detail="Error consultando Auth Service")
-    return response.json()
+    identidad = response.json()
+    if identidad.get("active"):
+        print(f"[GATEWAY] Auth Service valido el token: usuario {identidad['username']}, roles {identidad['roles']}", flush=True)
+    else:
+        print("[GATEWAY] Auth Service informo token invalido o expirado", flush=True)
+    return identidad
 
 
 def clasificar(metodo: str, servicio: str, recurso: str):
@@ -94,13 +117,17 @@ async def construir_contexto(nivel: str, credentials, secrets_gw):
     """Verifica identidad segun el nivel y arma las cabeceras internas."""
     headers = {"X-Gateway-Secret": secrets_gw["backend_shared_secret"]}
     if nivel == "publico":
+        print("[GATEWAY] Ruta publica, no requiere token", flush=True)
         return headers
     if credentials is None:
+        print("[GATEWAY] Ruta protegida sin token, se rechaza con 401", flush=True)
         raise HTTPException(status_code=401, detail="Bearer token requerido")
+    print("[GATEWAY] Ruta protegida, se pide validacion del token al Auth Service", flush=True)
     identidad = await introspectar(credentials.credentials, secrets_gw["auth_introspection_secret"])
     if not identidad.get("active", False):
         raise HTTPException(status_code=401, detail="Token invalido o expirado")
     if nivel == "operador" and "operador" not in identidad.get("roles", []):
+        print("[GATEWAY] El usuario no tiene rol operador, se rechaza con 403", flush=True)
         raise HTTPException(status_code=403, detail="Requiere rol operador")
     headers["X-Authenticated-User"] = identidad["username"]
     headers["X-Authenticated-Client"] = identidad["user_id"]
@@ -116,6 +143,7 @@ def health():
 @app.post("/api/auth/login")
 async def login(request: Request):
     """Login publico: el gateway firma la llamada al Auth Service con su secreto."""
+    print("[GATEWAY] POST /api/auth/login, se envia al Auth Service", flush=True)
     secrets_gw = await get_gateway_secrets()
     body = await request.body()
     try:
@@ -130,6 +158,7 @@ async def login(request: Request):
             )
     except httpx.RequestError:
         raise HTTPException(status_code=502, detail="Auth Service no disponible")
+    print(f"[GATEWAY] Respuesta del Auth Service al login: {upstream.status_code}", flush=True)
     return Response(content=upstream.content, status_code=upstream.status_code,
                     media_type=upstream.headers.get("content-type", "application/json"))
 
@@ -158,6 +187,7 @@ async def proxy(servicio: str, recurso: str, request: Request,
         raise HTTPException(status_code=404, detail="Servicio no publicado")
 
     nivel = clasificar(request.method, servicio, recurso)
+    print(f"[GATEWAY] {request.method} /api/{servicio}/{recurso}, nivel de acceso: {nivel}", flush=True)
     if nivel is None:
         raise HTTPException(status_code=404, detail="Ruta no publicada")
 
@@ -169,6 +199,7 @@ async def proxy(servicio: str, recurso: str, request: Request,
         headers["content-type"] = content_type
     body = await request.body()
 
+    print(f"[GATEWAY] Enrutando a {servicio}: {destino}/{recurso}", flush=True)
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
             upstream = await client.request(
@@ -181,6 +212,7 @@ async def proxy(servicio: str, recurso: str, request: Request,
     except httpx.RequestError:
         raise HTTPException(status_code=502, detail=f"Servicio {servicio} no disponible")
 
+    print(f"[GATEWAY] Respuesta de {servicio}: {upstream.status_code}", flush=True)
     return Response(
         content=upstream.content,
         status_code=upstream.status_code,

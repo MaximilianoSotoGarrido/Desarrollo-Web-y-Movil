@@ -3,7 +3,8 @@
 Backend seguro del caso 37 (Papelería **OfiExpress**): API Gateway, Auth Service,
 administrador de secretos, GraphQL Gateway y cuatro microservicios privados
 (`inventory`, `orders`, `clients`, `payments`), más mensajería asíncrona STOMP.
-La entrega se ejecuta con **datos de frontend**, no con el frontend integrado.
+El frontend de `Unidad 1/Semana 2` está integrado: llama solo al API Gateway, que tiene CORS
+habilitado únicamente para el origen local del frontend.
 
 ## Requisitos
 
@@ -103,6 +104,12 @@ Guarde esa salida como evidencia.
 | ana     | 1234      | cliente  | USR-001 |
 | pedro   | 5678      | cliente  | USR-002 |
 | carla   | oper123   | operador | USR-003 |
+
+## Registros de cada servicio
+
+Cada ventana muestra líneas con su etiqueta: `[GATEWAY]`, `[SECRET-MANAGER]`, `[AUTH]`,
+`[INVENTORY]` y `[ORDERS]`. Ahí se ve la validación de secretos, la autenticación, el
+enrutamiento y cada consulta o escritura en MongoDB.
 
 ## Mensajería STOMP (integración asíncrona)
 

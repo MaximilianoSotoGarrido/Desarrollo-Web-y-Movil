@@ -41,7 +41,9 @@ app = FastAPI(title="inventory - OfiExpress", description="Catalogo y disponibil
 def verify_gateway(x_gateway_secret: str = Header(default="")):
     import secrets as _s
     if not _s.compare_digest(x_gateway_secret, INTERNAL_GATEWAY_SECRET):
+        print("[INVENTORY] Firma del gateway ausente o invalida, llamada rechazada con 403", flush=True)
         raise HTTPException(status_code=403, detail="Solicitud no autorizada; falta firma del gateway")
+    print("[INVENTORY] Firma del gateway valida, llamada permitida", flush=True)
 
 
 class ProductoIn(BaseModel):
@@ -59,7 +61,8 @@ class ReservaIn(BaseModel):
 
 def doc_to_public(doc):
     return {"sku": doc["sku"], "nombre": doc["nombre"], "precio": doc["precio"],
-            "stock": doc["stock"], "categoria": doc.get("categoria", "general")}
+            "stock": doc["stock"], "categoria": doc.get("categoria", "general"),
+            "descripcion": doc.get("descripcion", ""), "icono": doc.get("icono", "fa-cube")}
 
 
 @app.get("/health", dependencies=[Depends(verify_gateway)])
@@ -71,6 +74,7 @@ def health():
 async def listar_productos():
     """Catalogo publico: solo campos permitidos del catalogo."""
     items = [doc_to_public(d) async for d in coll.find({})]
+    print(f"[INVENTORY] MongoDB ofiexpress_inventory.productos: consulta del catalogo, {len(items)} productos", flush=True)
     return {"productos": items}
 
 
@@ -118,7 +122,9 @@ async def reservar_stock(reserva: ReservaIn):
         {"$inc": {"stock": -reserva.cantidad}},
     )
     if res.modified_count == 0:
+        print(f"[INVENTORY] MongoDB ofiexpress_inventory.productos: stock insuficiente para {reserva.sku}", flush=True)
         raise HTTPException(status_code=409, detail="Stock insuficiente")
+    print(f"[INVENTORY] MongoDB ofiexpress_inventory.productos: stock de {reserva.sku} descontado en {reserva.cantidad}", flush=True)
     return {"sku": reserva.sku, "reservado": reserva.cantidad, "precio_unitario": doc["precio"]}
 
 
@@ -128,4 +134,5 @@ async def liberar_stock(reserva: ReservaIn):
     res = await coll.update_one({"sku": reserva.sku}, {"$inc": {"stock": reserva.cantidad}})
     if res.matched_count == 0:
         raise HTTPException(status_code=404, detail="Producto no encontrado")
+    print(f"[INVENTORY] MongoDB ofiexpress_inventory.productos: stock de {reserva.sku} devuelto en {reserva.cantidad}", flush=True)
     return {"sku": reserva.sku, "liberado": reserva.cantidad}
